@@ -51,6 +51,8 @@ def plot_audio_files():
   val_files = filenames[6400: 6400 + 800]
   test_files = filenames[-800:]
 
+  print(commands)
+
 
   num_samples = len(filenames)
   print('Number of total examples:', num_samples)
@@ -87,14 +89,9 @@ def plot_audio_files():
   train_ds = train_ds.cache().prefetch(AUTOTUNE)
   val_ds = val_ds.cache().prefetch(AUTOTUNE)
 
-  for spectrogram, _ in spectrogram_ds.take(1):
-    input_shape = spectrogram.shape
-  print('Input shape:', input_shape)
-  num_labels = len(commands)
-
   print(tf.__version__)
 
-  model = m.model_a()
+  model = m.model_a(spectrogram_ds)
 
   model.summary()
 

@@ -5,13 +5,13 @@ from tensorflow._api.v2 import audio
 from tensorflow.keras import layers
 from tensorflow.keras import models
 
-from utils import commands
+from utils import get_commands
 
 def model_a(spectrogram_ds):
   for spectrogram, _ in spectrogram_ds.take(1):
     input_shape = spectrogram.shape
   print('Input shape:', input_shape)
-  num_labels = len(commands())
+  num_labels = len(get_commands())
 
   # Instantiate the `tf.keras.layers.Normalization` layer.
   norm_layer = tf.keras.layers.experimental.preprocessing.Normalization(

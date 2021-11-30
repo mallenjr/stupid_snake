@@ -1,13 +1,22 @@
 import numpy as np
 import tensorflow as tf
+import os
 
 import pathlib
 
 DATASET_PATH = './data'
 
+try:
+  AUTOTUNE = tf.data.AUTOTUNE     
+except:
+  AUTOTUNE = tf.data.experimental.AUTOTUNE 
+
 def get_commands():
   commands = np.array(tf.io.gfile.listdir(str(get_data_dir())))
   commands = commands[commands != 'README.md']
+  commands = commands[commands != 'testing_list.txt']
+  commands = commands[commands != 'validation_list.txt']
+  commands = commands[commands != 'LICENSE']
   return commands
 
 def get_data_dir():
@@ -77,7 +86,7 @@ def plot_spectrogram(spectrogram, ax):
 
 def get_spectrogram_and_label_id(audio, label):
   spectrogram = get_spectrogram(audio)
-  label_id = tf.argmax(tf.cast(label == commands, tf.float32))
+  label_id = tf.argmax(tf.cast(label == get_commands(), tf.float32))
   return spectrogram, label_id
 
 def preprocess_dataset(files):
