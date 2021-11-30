@@ -38,6 +38,7 @@ def model_a(spectrogram_ds):
 
   return model
 
+# https://medium.com/gradientcrescent/urban-sound-classification-using-convolutional-neural-networks-with-keras-theory-and-486e92785df4
 def model_b(spectrogram_ds):
   for spectrogram, _ in spectrogram_ds.take(1):
     input_shape = spectrogram.shape
