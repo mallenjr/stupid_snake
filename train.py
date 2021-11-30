@@ -91,7 +91,7 @@ def plot_audio_files():
 
   print(tf.__version__)
 
-  model = m.model_a(spectrogram_ds)
+  model = m.model_b(spectrogram_ds)
 
   model.summary()
 
@@ -101,12 +101,12 @@ def plot_audio_files():
     metrics=['accuracy'],
   )
 
-  EPOCHS = 15
+  EPOCHS = 30
   history = model.fit(
     train_ds,
     validation_data=val_ds,
     epochs=EPOCHS,
-    callbacks=tf.keras.callbacks.EarlyStopping(verbose=1, patience=2),
+    callbacks=tf.keras.callbacks.EarlyStopping(verbose=1, patience=3),
   )
 
   metrics = history.history
