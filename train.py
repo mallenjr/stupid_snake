@@ -60,9 +60,9 @@ def plot_audio_files():
         len(tf.io.gfile.listdir(str(data_dir/commands[0]))))
   print('Example file tensor:', filenames[0])
 
-  train_files = filenames[:6400]
-  val_files = filenames[6400: 6400 + 800]
-  test_files = filenames[-800:]
+  train_files = filenames[:3200]
+  val_files = filenames[3200: 3200 + 400]
+  test_files = filenames[3200 + 400: 3200 + 800]
 
   print('Training set size', len(train_files))
   print('Validation set size', len(val_files))
@@ -82,7 +82,7 @@ def plot_audio_files():
   val_ds = utils.preprocess_dataset(val_files)
   test_ds = utils.preprocess_dataset(test_files)
 
-  batch_size = 64
+  batch_size = 32
   train_ds = train_ds.batch(batch_size)
   val_ds = val_ds.batch(batch_size)
 
@@ -108,6 +108,8 @@ def plot_audio_files():
     epochs=EPOCHS,
     callbacks=tf.keras.callbacks.EarlyStopping(verbose=1, patience=3),
   )
+
+  model.save('./model')
 
   metrics = history.history
   plt.plot(history.epoch, metrics['loss'], metrics['val_loss'])
