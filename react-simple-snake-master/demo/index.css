@@ -30,8 +30,6 @@ a, a:visited {
   font-size: max(12px, 1.2vw);
 }
 
-#instructions {
-  color: rgb(172, 172, 172);
-  font-size: 10px;
-  font-size: max(10px, 1vw);
+#spacer {
+  height: 10em;
 }
