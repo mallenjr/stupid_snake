@@ -1,10 +1,9 @@
-import React,{ useEffect } from 'react'
+import React from 'react'
 import './SnakeGame.css'
 import GameOver from './GameOver.jsx'
 
 class SnakeGame extends React.Component {
   constructor(props) {
-
     super(props)
 
     this.handleKeyDown = this.handleKeyDown.bind(this)
@@ -27,35 +26,17 @@ class SnakeGame extends React.Component {
       score: 0,
       highScore: Number(localStorage.getItem('snakeHighScore')) || 0,
       newHighScore: false,
+      mounted: false,
     }
-    
-    setInterval((function(self) {
-      fetch('http://localhost:23336')
-        .then(function(response) {
-          return response.text();
-        }).then(function(data) {
-          console.log(data); // this will be a string
-          if (data === 'up') {
-            self.goUp()
-          } else if (data === 'down') {
-            self.goDown()
-          } else if (data === 'left') { 
-            self.goLeft()
-          } else if (data === 'right') {
-            self.goLeft()
-          }
-
-        });
-    })(this), 500);
-
   }
-
-  
 
   componentDidMount() {
     this.initGame()
     window.addEventListener('keydown', this.handleKeyDown)
     this.gameLoop()
+    this.setState({
+      mounted: true,
+    })
   }
 
   initGame() {
@@ -105,6 +86,26 @@ class SnakeGame extends React.Component {
       snake,
       apple: { Xpos: appleXpos, Ypos: appleYpos },
     })
+
+    var self = this // I'm so sorry
+    setInterval(function () {
+      fetch('http://localhost:23336')
+        .then(function (response) {
+          return response.text()
+        })
+        .then(function (data) {
+          if (data === 'up') {
+            self.goUp()
+          } else if (data === 'down') {
+            self.goDown()
+          } else if (data === 'left') {
+            self.goLeft()
+          } else if (data === 'right') {
+            self.goRight()
+          }
+          self.setState({ directionChanged: true })
+        })
+    }, 200)
   }
 
   gameLoop() {
