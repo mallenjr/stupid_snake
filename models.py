@@ -45,6 +45,8 @@ def model_b(spectrogram_ds):
   print('Input shape:', input_shape)
   num_labels = len(get_commands())
 
+  print(num_labels)
+
   # Instantiate the `tf.keras.layers.Normalization` layer.
   norm_layer = tf.keras.layers.experimental.preprocessing.Normalization(
     axis=None)

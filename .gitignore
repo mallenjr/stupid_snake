@@ -2,3 +2,4 @@ data/
 model/
 *.png
 *.wav
+__pycache__/
