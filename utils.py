@@ -17,6 +17,7 @@ def get_commands():
   commands = commands[commands != 'testing_list.txt']
   commands = commands[commands != 'validation_list.txt']
   commands = commands[commands != 'LICENSE']
+  commands = commands[commands != 'out.wav']
   return commands
 
 def get_data_dir():

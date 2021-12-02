@@ -47,12 +47,9 @@ def plot_audio_files():
   filenames = tf.io.gfile.glob(str(data_dir) + '/*/*')
   filenames = tf.random.shuffle(filenames)
 
-  train_files = filenames[:6400]
-  val_files = filenames[6400: 6400 + 800]
-  test_files = filenames[-800:]
+  print(len(filenames))
 
   print(commands)
-
 
   num_samples = len(filenames)
   print('Number of total examples:', num_samples)
@@ -60,9 +57,12 @@ def plot_audio_files():
         len(tf.io.gfile.listdir(str(data_dir/commands[0]))))
   print('Example file tensor:', filenames[0])
 
-  train_files = filenames[:3200]
-  val_files = filenames[3200: 3200 + 400]
-  test_files = filenames[3200 + 400: 3200 + 800]
+  size_a = int(len(filenames) * 0.8)
+  size_b = int(len(filenames) * 0.1)
+
+  train_files = filenames[:size_a]
+  val_files = filenames[size_a: size_a + size_b]
+  test_files = filenames[size_a + size_b:]
 
   print('Training set size', len(train_files))
   print('Validation set size', len(val_files))
@@ -82,7 +82,7 @@ def plot_audio_files():
   val_ds = utils.preprocess_dataset(val_files)
   test_ds = utils.preprocess_dataset(test_files)
 
-  batch_size = 32
+  batch_size = 64
   train_ds = train_ds.batch(batch_size)
   val_ds = val_ds.batch(batch_size)
 

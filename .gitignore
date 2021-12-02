@@ -3,3 +3,4 @@ model/
 *.png
 *.wav
 __pycache__/
+model_a/
