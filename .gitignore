@@ -3,4 +3,5 @@ model/
 *.png
 *.wav
 __pycache__/
-model_a/
+model_*/
+model*.zip
