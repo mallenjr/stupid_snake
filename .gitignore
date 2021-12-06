@@ -6,3 +6,4 @@ __pycache__/
 model_*/
 model*.zip
 *.tflite
+**/.DS_Store
