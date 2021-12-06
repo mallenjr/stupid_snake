@@ -8,6 +8,7 @@ import tensorflow as tf
 import utils
 import constants
 import models as m
+import tensorflow_model_optimization as tfmot
 
 # Set the seed value for experiment reproducibility.
 seed = 42
@@ -95,21 +96,44 @@ def train_model(spectrogram_ds, train_ds, val_ds, test_ds):
 
   model.summary()
 
-  model.compile(
+  cluster_weights = tfmot.clustering.keras.cluster_weights
+  CentroidInitialization = tfmot.clustering.keras.CentroidInitialization
+
+  clustering_params = {
+    'number_of_clusters': 16,
+    'cluster_centroids_init': CentroidInitialization.LINEAR
+  }
+
+  # Cluster a whole model
+  clustered_model = cluster_weights(model, **clustering_params)
+
+
+  clustered_model.compile(
     optimizer=tf.keras.optimizers.Adam(),
     loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
     metrics=['accuracy'],
   )
 
   EPOCHS = 30
-  history = model.fit(
+  history = clustered_model.fit(
     train_ds,
     validation_data=val_ds,
     epochs=EPOCHS,
     callbacks=tf.keras.callbacks.EarlyStopping(verbose=1, patience=3),
   )
 
-  model.save('./model')
+  final_model = tfmot.clustering.keras.strip_clustering(clustered_model)
+
+  converter = tf.lite.TFLiteConverter.from_keras_model(final_model)
+  converter.optimizations = [tf.lite.Optimize.DEFAULT]
+  tflite_quant_model = converter.convert()
+
+  with open('model.tflite', 'wb') as f:
+    f.write(tflite_quant_model)
+
+
+
+  clustered_model.save('./model')
 
   metrics = history.history
   plt.plot(history.epoch, metrics['loss'], metrics['val_loss'])
@@ -126,7 +150,7 @@ def train_model(spectrogram_ds, train_ds, val_ds, test_ds):
   test_audio = np.array(test_audio)
   test_labels = np.array(test_labels)
 
-  y_pred = np.argmax(model.predict(test_audio), axis=1)
+  y_pred = np.argmax(clustered_model.predict(test_audio), axis=1)
   y_true = test_labels
 
   test_acc = sum(y_pred == y_true) / len(y_true)

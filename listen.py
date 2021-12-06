@@ -8,10 +8,20 @@ from flask_cors import CORS
 import threading
 import os
 
+from time import perf_counter
+
 import utils
 import constants
 
+tf.config.optimizer.set_jit(True)
+
 model = load_model('model')
+tflite_model = tf.lite.Interpreter(model_path="model.tflite")
+tflite_model.allocate_tensors()
+input_details = tflite_model.get_input_details()
+output_details = tflite_model.get_output_details()
+
+
 
 commands = ['eight', 'zero', 'right', 'down', 'left', 'two', '_background_noise_', 'stop', 'go', 'up']
 print(commands)
@@ -58,6 +68,31 @@ def prepare_data(audio_binary):
 
     return spectrogram
 
+def run_base_model(infrence_array):
+    global direction
+    result = model.predict(infrence_array)
+    prediction = np.argmax(result, axis=1)
+    if result[0][prediction] > 0.4:
+        print(prediction[0])
+        print(commands[int(prediction[0])])
+        direction = commands[int(prediction[0])]
+    else:
+        print('no result found')
+
+def run_tflite_model(infrence_array):
+    global direction
+    ra = tflite_model.set_tensor(input_details[0]['index'], infrence_array)
+    tflite_model.invoke()
+
+    result = tflite_model.get_tensor(output_details[0]['index'])
+    prediction = np.argmax(result, axis=1)
+    if result[0][prediction] > 0.4:
+        print(prediction[0])
+        print(commands[int(prediction[0])])
+        direction = commands[int(prediction[0])]
+    else:
+        print('no result found')
+
 def infer_from_speech(audio_binary):
     print('starting inference')
     global direction
@@ -67,14 +102,15 @@ def infer_from_speech(audio_binary):
     infrence_array.append(spectrogram.numpy())
     infrence_array = np.array(infrence_array)
 
-    result = model.predict(infrence_array)
-    prediction = np.argmax(result, axis=1)
-    if result[0][prediction] > 0.4:
-        print(prediction[0])
-        print(commands[int(prediction[0])])
-        direction = commands[int(prediction[0])]
-    else:
-        print('no result found')
+    t1_start = perf_counter()
+    run_base_model(infrence_array)
+    t1_stop = perf_counter()
+    print(f'elasped: {t1_stop - t1_start}')
+
+    t2_start = perf_counter()
+    run_base_model(infrence_array)
+    t2_stop = perf_counter()
+    print(f'elasped: {t2_stop - t2_start}')
 
 
 def run_infrence():
