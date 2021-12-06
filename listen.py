@@ -1,27 +1,47 @@
 import numpy as np
 import speech_recognition as sr
 from tensorflow.keras.models import load_model
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_cors import CORS                                               
 import threading
+import os
 
 import utils
 import constants
 
 model = load_model('model')
 
-commands = utils.get_commands()
+commands = ['eight', 'zero', 'right', 'down', 'left', 'two', '_background_noise_', 'stop', 'go', 'up']
 print(commands)
-
-app = Flask(__name__)
-CORS(app)
 
 direction = "right"
 
-@app.route("/")
-def main():
+def run_http_server():
     global direction
-    return direction
+    app = Flask(__name__, static_folder='./dist')
+    CORS(app)
+
+    @app.route("/")
+    def main():
+        global direction
+        return direction
+
+    # Serve React App
+    @app.route('/app', defaults={'path': ''})
+    @app.route('/app/<path:path>')
+    def serve(path):
+        print(path)
+        if path != "" and os.path.exists(app.static_folder + '/' + path):
+            return send_from_directory(app.static_folder, path)
+        else:
+            return send_from_directory(app.static_folder, 'index.html')
+
+    app.run(
+        host=constants.webserver_host_name, 
+        port=constants.webserver_port, 
+        debug=True, 
+        use_reloader=False
+    )
 
 
 def collect_speech(r, source):
@@ -56,22 +76,29 @@ def infer_from_speech():
         print('no result found')
 
 
-# main method
-if __name__ == '__main__':
-    threading.Thread(
-        target=lambda: app.run(
-            host=constants.webserver_host_name, 
-            port=constants.webserver_port, 
-            debug=True, 
-            use_reloader=False
-        )
-    ).start()
-
+def run_infrence():
     # obtain audio from the microphone
     r = sr.Recognizer()
     r.energy_threshold = constants.mic_threshold
-    with sr.Microphone() as source:
-        r.adjust_for_ambient_noise(duration=4, source=source)
-        while 1:
-            collect_speech(r, source)
-            infer_from_speech()
+    try:
+        with sr.Microphone(device_index=2) as source:
+            r.adjust_for_ambient_noise(duration=4, source=source)
+            while 1:
+                collect_speech(r, source)
+                infer_from_speech()
+    except:
+        with sr.Microphone() as source:
+            r.adjust_for_ambient_noise(duration=4, source=source)
+            while 1:
+                collect_speech(r, source)
+                infer_from_speech()
+
+# main method
+if __name__ == '__main__':
+    threading.Thread(
+        target=lambda: run_http_server()
+    ).start()
+
+    threading.Thread(
+        target=lambda: run_infrence()
+    ).start()

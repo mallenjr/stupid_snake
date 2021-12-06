@@ -9,4 +9,4 @@ except:
 webserver_host_name = "0.0.0.0"
 webserver_port = 23336
 
-mic_threshold = 400
+mic_threshold = 300
