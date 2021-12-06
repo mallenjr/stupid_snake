@@ -5,3 +5,4 @@ model/
 __pycache__/
 model_*/
 model*.zip
+*.tflite
