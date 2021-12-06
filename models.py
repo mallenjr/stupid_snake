@@ -124,6 +124,8 @@ def model_c(spectrogram_ds):
       layers.Activation('relu'),
       layers.Conv2D(128, (3, 3)),
       layers.Activation('relu'),
+      layers.Conv2D(128, (3, 3)),
+      layers.Activation('relu'),
       layers.MaxPooling2D(pool_size=(2, 2)),
       layers.Dropout(0.5),
       layers.Flatten(),
@@ -131,9 +133,11 @@ def model_c(spectrogram_ds):
       layers.Activation('relu'),
       layers.Dense(512),
       layers.Activation('relu'),
-      layers.Dense(128),
+      layers.Dense(512),
       layers.Activation('relu'),
-      layers.Dropout(0.5),
+      layers.Dense(256),
+      layers.Activation('relu'),
+      layers.Dropout(0.25),
       layers.Dense(num_labels, activation='softmax'),
   ])
 

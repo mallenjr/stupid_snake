@@ -50,25 +50,24 @@ def collect_speech(r, source):
     print("Say something!")
     audio = r.listen(source, phrase_time_limit=1)
     wav_data = audio.get_wav_data()
-    file = open("data/out.wav", "wb")
-    file.write(wav_data)
-    file.close()
-    print('speech written')
+    return wav_data
 
-def infer_from_speech():
+def prepare_data(audio_binary):
+    waveform = utils.decode_audio(audio_binary)
+    spectrogram = utils.get_spectrogram(waveform)
+
+    return spectrogram
+
+def infer_from_speech(audio_binary):
     print('starting inference')
     global direction
-    test = ["data/out.wav"]
-    output_ds = utils.preprocess_dataset(test)
+    spectrogram = prepare_data(audio_binary)
 
-    test_audio = []
+    infrence_array = []
+    infrence_array.append(spectrogram.numpy())
+    infrence_array = np.array(infrence_array)
 
-    for audio, _ in output_ds:
-        test_audio.append(audio.numpy())
-
-    test_audio = np.array(test_audio)
-
-    result = model.predict(test_audio)
+    result = model.predict(infrence_array)
     prediction = np.argmax(result, axis=1)
     if result[0][prediction] > 0.4:
         print(prediction[0])
@@ -88,8 +87,8 @@ def run_infrence():
     with sr.Microphone(device_index=0) as source:
         r.adjust_for_ambient_noise(duration=4, source=source)
         while 1:
-            collect_speech(r, source)
-            infer_from_speech()
+            audio_binary = collect_speech(r, source)
+            infer_from_speech(audio_binary)
 
 # main method
 if __name__ == '__main__':
