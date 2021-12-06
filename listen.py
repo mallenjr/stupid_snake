@@ -7,6 +7,10 @@ from flask import Flask, send_from_directory
 from flask_cors import CORS                                         
 import threading
 import os
+import logging
+
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 from time import perf_counter
 
@@ -102,10 +106,10 @@ def infer_from_speech(audio_binary):
     infrence_array.append(spectrogram.numpy())
     infrence_array = np.array(infrence_array)
 
-    t1_start = perf_counter()
-    run_base_model(infrence_array)
-    t1_stop = perf_counter()
-    print(f'elasped: {t1_stop - t1_start}')
+    # t1_start = perf_counter()
+    # run_base_model(infrence_array)
+    # t1_stop = perf_counter()
+    # print(f'elasped: {t1_stop - t1_start}')
 
     t2_start = perf_counter()
     run_base_model(infrence_array)
@@ -117,7 +121,7 @@ def run_infrence():
     # obtain audio from the microphone
     r = sr.Recognizer()
     r.energy_threshold = constants.mic_threshold
-    r.phrase_threshold = 0.2
+    r.phrase_threshold = 0.15
 
     print(sr.Microphone.list_microphone_names())
 

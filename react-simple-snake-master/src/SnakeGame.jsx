@@ -105,7 +105,7 @@ class SnakeGame extends React.Component {
           }
           self.setState({ directionChanged: true })
         })
-    }, 150)
+    }, 75)
   }
 
   gameLoop() {
