@@ -6,6 +6,7 @@ import numpy as np
 import tensorflow as tf
 
 import utils
+import constants
 import models as m
 
 # Set the seed value for experiment reproducibility.
@@ -23,11 +24,6 @@ for device in gpu_devices:
 
 commands = utils.get_commands()
 
-try:
-  AUTOTUNE = tf.data.AUTOTUNE     
-except:
-  AUTOTUNE = tf.data.experimental.AUTOTUNE 
-
 def load_single_audio_file():
 
   f = tf.io.read_file('./data/bed/1aed7c6d_nohash_0.wav')
@@ -41,9 +37,7 @@ def load_single_audio_file():
 
   print(parts[-2])
 
-def plot_audio_files():
-  print('Commands:', commands)
-
+def get_filenames():
   filenames = tf.io.gfile.glob(str(data_dir) + '/*/*')
   filenames = tf.random.shuffle(filenames)
 
@@ -57,6 +51,9 @@ def plot_audio_files():
         len(tf.io.gfile.listdir(str(data_dir/commands[0]))))
   print('Example file tensor:', filenames[0])
 
+  return filenames
+
+def prepare_datasets(filenames):
   size_a = int(len(filenames) * 0.8)
   size_b = int(len(filenames) * 0.1)
 
@@ -72,26 +69,29 @@ def plot_audio_files():
 
   waveform_ds = files_ds.map(
       map_func=utils.get_waveform_and_label,
-      num_parallel_calls=AUTOTUNE)
+      num_parallel_calls=constants.AUTOTUNE)
 
   spectrogram_ds = waveform_ds.map(
     map_func=utils.get_spectrogram_and_label_id,
-    num_parallel_calls=AUTOTUNE)
+    num_parallel_calls=constants.AUTOTUNE)
 
   train_ds = spectrogram_ds
   val_ds = utils.preprocess_dataset(val_files)
   test_ds = utils.preprocess_dataset(test_files)
 
-  batch_size = 64
+  batch_size = constants.batch_size
   train_ds = train_ds.batch(batch_size)
   val_ds = val_ds.batch(batch_size)
 
-  train_ds = train_ds.cache().prefetch(AUTOTUNE)
-  val_ds = val_ds.cache().prefetch(AUTOTUNE)
+  train_ds = train_ds.cache().prefetch(constants.AUTOTUNE)
+  val_ds = val_ds.cache().prefetch(constants.AUTOTUNE)
 
+  return spectrogram_ds, train_ds, val_ds, test_ds
+
+def train_model(spectrogram_ds, train_ds, val_ds, test_ds):
   print(tf.__version__)
 
-  model = m.model_b(spectrogram_ds)
+  model = m.model_c(spectrogram_ds)
 
   model.summary()
 
@@ -134,4 +134,6 @@ def plot_audio_files():
 
 
 if __name__ == "__main__":
-  plot_audio_files()
+  filenames = get_filenames()
+  spectrogram_ds, train_ds, val_ds, test_ds = prepare_datasets(filenames)
+  train_model(spectrogram_ds, train_ds, val_ds, test_ds)
