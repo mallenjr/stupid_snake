@@ -124,19 +124,16 @@ def run_infrence():
 
     print(sr.Microphone.list_microphone_names())
 
-    try:
-        with sr.Microphone(device_index=2) as source:
-            print(source.SAMPLE_RATE)
-            r.adjust_for_ambient_noise(duration=4, source=source)
-            while 1:
-                audio_binary = collect_speech(r, source)
-                infer_from_speech(audio_binary)
-    except:
-        with sr.Microphone() as source:
-            r.adjust_for_ambient_noise(duration=4, source=source)
-            while 1:
-                audio_binary = collect_speech(r, source)
-                infer_from_speech(audio_binary)
+    device_index = 0
+
+    if (len(argv) > 1):
+      device_index = int(argv[1])
+
+    with sr.Microphone(device_index, sample_rate=16000) as source:
+        r.adjust_for_ambient_noise(duration=4, source=source)
+        while 1:
+            audio_binary = collect_speech(r, source)
+            infer_from_speech(audio_binary)
 
 # main method
 if __name__ == '__main__':
