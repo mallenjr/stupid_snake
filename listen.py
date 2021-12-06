@@ -62,7 +62,7 @@ def run_http_server():
 
 def collect_speech(r, source):
     print("Say something!")
-    audio = r.listen(source, phrase_time_limit=1)
+    audio = r.listen(source, phrase_time_limit=0.75)
     wav_data = audio.get_wav_data()
     return wav_data
 
@@ -115,6 +115,8 @@ def infer_from_speech(audio_binary):
     # print(f'model a result: {result_a}')
     print(f'model b result: {result_b}\n')
 
+    direction = result_b
+
 
 def run_infrence():
     # obtain audio from the microphone
@@ -132,7 +134,10 @@ def run_infrence():
     with sr.Microphone(device_index, sample_rate=16000) as source:
         r.adjust_for_ambient_noise(duration=4, source=source)
         while 1:
+            t2_start = perf_counter()
             audio_binary = collect_speech(r, source)
+            t2_stop = perf_counter()
+            print(f'time to record: {t2_stop - t2_start}')
             infer_from_speech(audio_binary)
 
 # main method
