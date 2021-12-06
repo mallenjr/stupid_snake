@@ -92,7 +92,7 @@ def prepare_datasets(filenames):
 def train_model(spectrogram_ds, train_ds, val_ds, test_ds):
   print(tf.__version__)
 
-  model = m.model_c(spectrogram_ds)
+  model = m.model_b(spectrogram_ds)
 
   model.summary()
 
@@ -100,7 +100,7 @@ def train_model(spectrogram_ds, train_ds, val_ds, test_ds):
   CentroidInitialization = tfmot.clustering.keras.CentroidInitialization
 
   clustering_params = {
-    'number_of_clusters': 16,
+    'number_of_clusters': 32,
     'cluster_centroids_init': CentroidInitialization.LINEAR
   }
 
@@ -126,6 +126,7 @@ def train_model(spectrogram_ds, train_ds, val_ds, test_ds):
 
   converter = tf.lite.TFLiteConverter.from_keras_model(final_model)
   converter.optimizations = [tf.lite.Optimize.DEFAULT]
+  converter.target_spec.supported_types = [tf.float16]
   tflite_quant_model = converter.convert()
 
   with open('model.tflite', 'wb') as f:
