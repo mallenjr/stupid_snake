@@ -1,8 +1,10 @@
 import numpy as np
 import speech_recognition as sr
+import tensorflow as tf
+import numpy as np
 from tensorflow.keras.models import load_model
 from flask import Flask, send_from_directory
-from flask_cors import CORS                                               
+from flask_cors import CORS                                         
 import threading
 import os
 
@@ -80,21 +82,20 @@ def run_infrence():
     # obtain audio from the microphone
     r = sr.Recognizer()
     r.energy_threshold = constants.mic_threshold
-    try:
-        with sr.Microphone(device_index=2) as source:
-            r.adjust_for_ambient_noise(duration=4, source=source)
-            while 1:
-                collect_speech(r, source)
-                infer_from_speech()
-    except:
-        with sr.Microphone() as source:
-            r.adjust_for_ambient_noise(duration=4, source=source)
-            while 1:
-                collect_speech(r, source)
-                infer_from_speech()
+
+    print(sr.Microphone.list_microphone_names())
+
+    with sr.Microphone(device_index=0) as source:
+        r.adjust_for_ambient_noise(duration=4, source=source)
+        while 1:
+            collect_speech(r, source)
+            infer_from_speech()
 
 # main method
 if __name__ == '__main__':
+    print(f'tensorflow version: {tf.__version__}')
+    print(f'numpy version: {np.__version__}')
+
     threading.Thread(
         target=lambda: run_http_server()
     ).start()
