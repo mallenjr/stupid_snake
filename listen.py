@@ -81,6 +81,7 @@ def run_infrence():
     # obtain audio from the microphone
     r = sr.Recognizer()
     r.energy_threshold = constants.mic_threshold
+    r.phrase_threshold = 0.2
 
     print(sr.Microphone.list_microphone_names())
 
