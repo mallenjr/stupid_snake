@@ -127,7 +127,7 @@ var SnakeGame = /*#__PURE__*/function (_React$Component) {
       height: 0,
       blockWidth: 0,
       blockHeight: 0,
-      gameLoopTimeout: 200,
+      gameLoopTimeout: 150,
       timeoutId: 0,
       startSnakeSize: 0,
       snake: [],
@@ -226,7 +226,7 @@ var SnakeGame = /*#__PURE__*/function (_React$Component) {
             directionChanged: true
           });
         });
-      }, 75);
+      }, 50);
     }
   }, {
     key: "gameLoop",
@@ -300,7 +300,7 @@ var SnakeGame = /*#__PURE__*/function (_React$Component) {
         direction: 'right',
         directionChanged: false,
         isGameOver: false,
-        gameLoopTimeout: 200,
+        gameLoopTimeout: 150,
         snakeColor: this.getRandomColor(),
         appleColor: this.getRandomColor(),
         score: 0,
