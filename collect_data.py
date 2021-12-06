@@ -10,14 +10,18 @@ def collect_sample(r, source):
     print("Say something!")
     audio = r.listen(source, phrase_time_limit=1)
     wav_data = audio.get_wav_data()
-    file = open(f"data/{argv[1]}/sample-thomas-{i}.wav", "wb")
+    file = open(f"data/{argv[1]}/sample-{argv[2]}-{i}.wav", "wb")
     file.write(wav_data)
     file.close()
     print('speech written')
     print(f'count = {i}')
     i += 1
 
-if __name__ == "__main__":
+def main():
+  if (len(argv) < 2):
+    print('usage: collect_data.py <sample_type> <sample_collection>')
+    return
+
   for index, name in enumerate(sr.Microphone.list_microphone_names()):
     print("Microphone with name \"{1}\" found for `Microphone(device_index={0})`".format(index, name))
 
@@ -31,3 +35,6 @@ if __name__ == "__main__":
             if i == 115:
               print("stopping data collection")
               break
+
+if __name__ == "__main__":
+  main()

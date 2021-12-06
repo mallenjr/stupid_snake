@@ -34,7 +34,7 @@ direction = "right"
 
 def run_http_server():
     global direction
-    app = Flask(__name__, static_folder='./dist')
+    app = Flask("http_server", static_folder='./dist')
     CORS(app)
 
     @app.route("/")
