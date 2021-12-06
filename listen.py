@@ -8,6 +8,7 @@ from flask_cors import CORS
 import threading
 import os
 import logging
+from sys import argv
 
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
@@ -24,7 +25,6 @@ tflite_model = tf.lite.Interpreter(model_path="model.tflite")
 tflite_model.allocate_tensors()
 input_details = tflite_model.get_input_details()
 output_details = tflite_model.get_output_details()
-
 
 
 commands = ['eight', 'zero', 'right', 'down', 'left', 'two', '_background_noise_', 'stop', 'go', 'up']
@@ -73,32 +73,28 @@ def prepare_data(audio_binary):
     return spectrogram
 
 def run_base_model(infrence_array):
-    global direction
     result = model.predict(infrence_array)
     prediction = np.argmax(result, axis=1)
     if result[0][prediction] > 0.4:
-        print(prediction[0])
-        print(commands[int(prediction[0])])
         direction = commands[int(prediction[0])]
+        return direction
     else:
-        print('no result found')
+        return "n/a"
 
 def run_tflite_model(infrence_array):
-    global direction
-    ra = tflite_model.set_tensor(input_details[0]['index'], infrence_array)
+    tflite_model.set_tensor(input_details[0]['index'], infrence_array)
     tflite_model.invoke()
 
     result = tflite_model.get_tensor(output_details[0]['index'])
     prediction = np.argmax(result, axis=1)
     if result[0][prediction] > 0.4:
-        print(prediction[0])
-        print(commands[int(prediction[0])])
         direction = commands[int(prediction[0])]
+        return direction
     else:
-        print('no result found')
+        return "n/a"
 
 def infer_from_speech(audio_binary):
-    print('starting inference')
+    print('Audio binary received. Starting inference..')
     global direction
     spectrogram = prepare_data(audio_binary)
 
@@ -107,14 +103,17 @@ def infer_from_speech(audio_binary):
     infrence_array = np.array(infrence_array)
 
     # t1_start = perf_counter()
-    # run_base_model(infrence_array)
+    # result_a = run_base_model(infrence_array)
     # t1_stop = perf_counter()
-    # print(f'elasped: {t1_stop - t1_start}')
 
     t2_start = perf_counter()
-    run_base_model(infrence_array)
+    result_b = run_tflite_model(infrence_array)
     t2_stop = perf_counter()
-    print(f'elasped: {t2_stop - t2_start}')
+
+    # print(f'model a elasped: {t1_stop - t1_start}')
+    print(f'model b elasped: {t2_stop - t2_start}')
+    # print(f'model a result: {result_a}')
+    print(f'model b result: {result_b}\n')
 
 
 def run_infrence():
@@ -127,6 +126,7 @@ def run_infrence():
 
     try:
         with sr.Microphone(device_index=2) as source:
+            print(source.SAMPLE_RATE)
             r.adjust_for_ambient_noise(duration=4, source=source)
             while 1:
                 audio_binary = collect_speech(r, source)
