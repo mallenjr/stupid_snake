@@ -63,11 +63,18 @@ def run_http_server():
     )
 
 
-# listen to the defined micrpone 
+# listen to the defined microphone 
 def collect_speech(r, source):
     print("Say something!")
     audio = r.listen(source, phrase_time_limit=0.75)
     wav_data = audio.get_wav_data()
+    return wav_data
+
+# listen to the defined microphone 
+def collect_speech_and_downsample(r, source):
+    print("Say something!")
+    audio = r.listen(source, phrase_time_limit=0.75)
+    wav_data = audio.get_wav_data(convert_rate=16000)
     return wav_data
 
 def prepare_data(audio_binary):
@@ -85,8 +92,8 @@ def run_base_model(infrence_array):
     else:
         return "n/a"
 
-def run_tflite_model(infrence_array):
-    tflite_model.set_tensor(input_details[0]['index'], infrence_array)
+def run_tflite_model(inference_array):
+    tflite_model.set_tensor(input_details[0]['index'], inference_array)
     tflite_model.invoke()
 
     result = tflite_model.get_tensor(output_details[0]['index'])
@@ -110,27 +117,27 @@ def infer_from_speech(audio_binary):
     global direction
     spectrogram = prepare_data(audio_binary)
 
-    infrence_array = []
-    infrence_array.append(spectrogram.numpy())
-    infrence_array = np.array(infrence_array)
+    inference_array = []
+    inference_array.append(spectrogram.numpy())
+    inference_array = np.array(inference_array)
 
     # t1_start = perf_counter()
-    # result_a = run_base_model(infrence_array)
+    # result_a = run_base_model(inference_array)
     # t1_stop = perf_counter()
 
     t2_start = perf_counter()
-    result_b = run_tflite_model(infrence_array)
+    result_b = run_tflite_model(inference_array)
     t2_stop = perf_counter()
 
-    # print(f'model a elasped: {t1_stop - t1_start}')
-    print(f'model b elasped: {t2_stop - t2_start}')
+    # print(f'model a elapsed: {t1_stop - t1_start}')
+    print(f'model b elapsed: {t2_stop - t2_start}')
     # print(f'model a result: {result_a}')
     print(f'model b result: {result_b}\n')
 
     direction = result_b
 
 
-def run_infrence():
+def run_inference():
     # obtain audio from the microphone
     r = sr.Recognizer()
     r.phrase_threshold = 0.175
@@ -144,11 +151,18 @@ def run_infrence():
     if (len(argv) > 1):
       device_index = int(argv[1])
 
-    with sr.Microphone(device_index, sample_rate=16000) as source:
-        r.adjust_for_ambient_noise(duration=4, source=source)
-        while 1:
-            audio_binary = collect_speech(r, source)
-            infer_from_speech(audio_binary)
+    try:
+        with sr.Microphone(device_index, sample_rate=16000) as source:
+            r.adjust_for_ambient_noise(duration=4, source=source)
+            while 1:
+                audio_binary = collect_speech(r, source)
+                infer_from_speech(audio_binary)
+    except:
+        with sr.Microphone(device_index) as source:
+            r.adjust_for_ambient_noise(duration=4, source=source)
+            while 1:
+                audio_binary = collect_speech_and_downsample(r, source)
+                infer_from_speech(audio_binary)
 
 # main method
 if __name__ == '__main__':
@@ -161,6 +175,6 @@ if __name__ == '__main__':
     ).start()
 
     threading.Thread(
-        target=lambda: run_infrence(),
+        target=lambda: run_inference(),
         name="infrence_thread"
     ).start()
