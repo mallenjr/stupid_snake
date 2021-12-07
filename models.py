@@ -7,7 +7,7 @@ from tensorflow.keras import models
 
 from utils import get_commands
 
-def model_a(spectrogram_ds):
+def shallow_cnn(spectrogram_ds):
   for spectrogram, _ in spectrogram_ds.take(1):
     input_shape = spectrogram.shape
   print('Input shape:', input_shape)
@@ -39,7 +39,7 @@ def model_a(spectrogram_ds):
   return model
 
 # https://medium.com/gradientcrescent/urban-sound-classification-using-convolutional-neural-networks-with-keras-theory-and-486e92785df4
-def model_b(spectrogram_ds):
+def deep_cnn_slim(spectrogram_ds):
   for spectrogram, _ in spectrogram_ds.take(1):
     input_shape = spectrogram.shape
   print('Input shape:', input_shape)
@@ -87,7 +87,7 @@ def model_b(spectrogram_ds):
 
   return model
 
-def model_c(spectrogram_ds):
+def deep_cnn(spectrogram_ds):
   for spectrogram, _ in spectrogram_ds.take(1):
     input_shape = spectrogram.shape
   print('Input shape:', input_shape)

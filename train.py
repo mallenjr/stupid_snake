@@ -92,7 +92,7 @@ def prepare_datasets(filenames):
 def train_model(spectrogram_ds, train_ds, val_ds, test_ds):
   print(tf.__version__)
 
-  model = m.model_b(spectrogram_ds)
+  model = m.deep_cnn(spectrogram_ds)
 
   model.summary()
 
