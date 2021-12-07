@@ -69,6 +69,7 @@ model_a = model_b = input_details = output_details = None
 commands_a = ['eight', 'zero', 'right', 'down', 'left', 'two', '_background_noise_', 'stop', 'go', 'up']
 commands_b = ['bed', 'right', 'down', 'left', '_background_noise_', 'no', 'wow', 'up', 'yes', 'five']
 
+# Initialize a Tensorflow Lite model from a provided path
 def init_tflite_model(path):
     tflite_model = tf.lite.Interpreter(model_path=path)
     tflite_model.allocate_tensors()
@@ -84,12 +85,15 @@ def collect_speech(r, source, convert_rate=None):
     wav_data = audio.get_wav_data(convert_rate)
     return wav_data
 
+# Take in an audio binary (wav file) and return a spectrogram
 def prepare_data(audio_binary):
     waveform = utils.decode_audio(audio_binary)
     spectrogram = utils.get_spectrogram(waveform)
 
     return spectrogram
 
+# Classify the provided audio data using the provided model and return
+# the result if the constraints are met
 def run_model(inference_array, model, commands, results, index):
     model.set_tensor(input_details[0]['index'], inference_array)
     model.invoke()
@@ -102,12 +106,14 @@ def run_model(inference_array, model, commands, results, index):
     else:
         results[index] = "n/a"
 
+# Take a spectrogram and show it using matplotlib
 def show_spectrogram(spectrogram):
     _, axes = plt.subplots(2, figsize=(12, 8))
     utils.plot_spectrogram(spectrogram.numpy(), axes[1])
     axes[1].set_title('Spectrogram')
     plt.show()
 
+# Infer the intended keyword from a provided audio binary
 def infer_from_speech(audio_binary):
     print('Audio binary received. Starting inference..')
     global direction
@@ -134,6 +140,8 @@ def infer_from_speech(audio_binary):
         name="inference_b"
     )
 
+    # We chose a threaded model for the inference step because the
+    # total classification time decreased from ~4ms to ~2ms
     thread_a.start()
     thread_b.start()
     thread_a.join()
@@ -146,6 +154,7 @@ def infer_from_speech(audio_binary):
 
     direction = result_a if result_a == result_b else 'n/a'
 
+# Listen and infer keywords from the selected microphone
 def run_inference():
     # obtain audio from the microphone
     r = sr.Recognizer()

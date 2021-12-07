@@ -10,32 +10,21 @@ import constants
 import models as m
 import tensorflow_model_optimization as tfmot
 
-# Set the seed value for experiment reproducibility.
+# Tensorflow setup code. We set the seed value for experiment 
+# reproducibility.
 seed = 42
 tf.random.set_seed(seed)
 np.random.seed(seed)
-
-data_dir = pathlib.Path(constants.DATASET_PATH)
-
 gpu_devices = tf.config.experimental.list_physical_devices('GPU')
 for device in gpu_devices:
     tf.config.experimental.set_memory_growth(device, True)
 
+# Set a few application constants
+data_dir = pathlib.Path(constants.DATASET_PATH)
 commands = utils.get_commands()
 
-def load_single_audio_file():
-
-  f = tf.io.read_file('./data/bed/1aed7c6d_nohash_0.wav')
-
-  audio, _ = tf.audio.decode_wav(contents=f)
-  print(audio.shape)
-
-  parts = tf.strings.split(
-      input='./data/bed/1aed7c6d_nohash_0.wav',
-      sep=os.path.sep)
-
-  print(parts[-2])
-
+# Get the list of filenames to be used for
+# training/validation and return it
 def get_filenames():
   filenames = tf.io.gfile.glob(str(data_dir) + '/*/*')
   filenames = tf.random.shuffle(filenames)
@@ -52,6 +41,10 @@ def get_filenames():
 
   return filenames
 
+# Prepare the various dataset used for training/validation
+# and return the individual datasets as well as the lambda
+# function for use in the normalization layer of the training
+# model
 def prepare_datasets(filenames):
   size_a = int(len(filenames) * 0.8)
   size_b = int(len(filenames) * 0.1)
@@ -66,6 +59,8 @@ def prepare_datasets(filenames):
 
   files_ds = tf.data.Dataset.from_tensor_slices(train_files)
 
+  # Take a list of files and convert the entire dataset to
+  # spectrograms
   waveform_ds = files_ds.map(
       map_func=utils.get_waveform_and_label,
       num_parallel_calls=constants.AUTOTUNE)
@@ -87,6 +82,8 @@ def prepare_datasets(filenames):
 
   return spectrogram_ds, train_ds, val_ds, test_ds
 
+# Train the model and save the Tensorflow Lite model
+# to a file to be used in the inference step
 def train_model(spectrogram_ds, train_ds, val_ds, test_ds):
   print(tf.__version__)
 

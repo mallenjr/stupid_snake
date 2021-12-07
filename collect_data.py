@@ -3,8 +3,20 @@ from sys import argv
 
 import constants
 
+'''
+------------------------------------------------------------------------------------------------------------------------------
+
+DATA COLLECTION CODE
+
+------------------------------------------------------------------------------------------------------------------------------
+'''
+
+# The starting index of the data collection script.
+# This value is included in each sample stored after
+# recording
 i = 0
 
+# Listen for a phrase and then store it
 def collect_sample(r, source):
     global i
     print("Say something!")
@@ -17,6 +29,8 @@ def collect_sample(r, source):
     print(f'count = {i}')
     i += 1
 
+# Main function. Parse command args and start a data collection
+# run. This function will record 115 samples and then terminate
 def main():
   if (len(argv) < 2):
     print('usage: collect_data.py <command> <sample_collection>')

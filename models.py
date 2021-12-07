@@ -7,6 +7,9 @@ from tensorflow.keras import models
 
 from utils import get_commands
 
+# https://www.tensorflow.org/tutorials/audio/simple_audio
+# First model implemented in the program. Cut and paste from
+# the Tensorflow article defined above on speech recognition
 def shallow_cnn(spectrogram_ds):
   for spectrogram, _ in spectrogram_ds.take(1):
     input_shape = spectrogram.shape
@@ -39,6 +42,8 @@ def shallow_cnn(spectrogram_ds):
   return model
 
 # https://medium.com/gradientcrescent/urban-sound-classification-using-convolutional-neural-networks-with-keras-theory-and-486e92785df4
+# The second model implemented in the program. Taken from the 
+# the article defined above with little to no modification
 def deep_cnn_slim(spectrogram_ds):
   for spectrogram, _ in spectrogram_ds.take(1):
     input_shape = spectrogram.shape
@@ -87,6 +92,8 @@ def deep_cnn_slim(spectrogram_ds):
 
   return model
 
+# This is the model that provided the best results. It's based
+# on the model defined above but with a few extra dense layers
 def deep_cnn(spectrogram_ds):
   for spectrogram, _ in spectrogram_ds.take(1):
     input_shape = spectrogram.shape
@@ -143,6 +150,11 @@ def deep_cnn(spectrogram_ds):
 
   return model
 
+# While this model is closely related to the model defined above it
+# started as a derivative of the VGG model. Throughout tuning this
+# model, we figured out how similar it was to the model we already
+# had so we ended up not really using it. It will stay here for
+# posterity's sake.
 def deep_cnn_b(spectrogram_ds):
   for spectrogram, _ in spectrogram_ds.take(1):
     input_shape = spectrogram.shape

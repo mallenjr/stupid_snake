@@ -9,6 +9,7 @@ try:
 except:
   AUTOTUNE = tf.data.experimental.AUTOTUNE 
 
+# Get a list of commands for the provided dataset
 def get_commands():
   commands = np.array(tf.io.gfile.listdir(str(get_data_dir())))
   commands = commands[commands != 'README.md']
@@ -18,6 +19,7 @@ def get_commands():
   commands = commands[commands != 'out.wav']
   return commands
 
+# Return the path for the data directory
 def get_data_dir():
   data_dir = pathlib.Path(constants.DATASET_PATH)
   return data_dir
@@ -30,6 +32,7 @@ def get_label(file_path):
   # to work in a TensorFlow graph.
   return parts[-2]
 
+# Return a waveform from a provided audio binary
 def decode_audio(audio_binary):
   # Decode WAV-encoded audio files to `float32` tensors, normalized
   # to the [-1.0, 1.0] range. Return `float32` audio and a sample rate.
@@ -39,13 +42,15 @@ def decode_audio(audio_binary):
   return tf.squeeze(audio, axis=-1)
 
 
-
+# Return the label and waveform from a provided
+# wavfile path
 def get_waveform_and_label(file_path):
   label = get_label(file_path)
   audio_binary = tf.io.read_file(file_path)
   waveform = decode_audio(audio_binary)
   return waveform, label
 
+# Generate a spectrogram from a supplied waveform
 def get_spectrogram(waveform):
   # Zero-padding for an audio waveform with less than 16,000 samples.
   input_len = 16000
@@ -69,6 +74,7 @@ def get_spectrogram(waveform):
   spectrogram = spectrogram[..., tf.newaxis]
   return spectrogram
 
+# Plot a provided spectrogram using matplotlib
 def plot_spectrogram(spectrogram, ax):
   if len(spectrogram.shape) > 2:
     assert len(spectrogram.shape) == 3
@@ -83,11 +89,14 @@ def plot_spectrogram(spectrogram, ax):
   Y = range(height)
   ax.pcolormesh(X, Y, log_spec)
 
+# Return the label and spectrogram from a provided
+# waveform and label
 def get_spectrogram_and_label_id(audio, label):
   spectrogram = get_spectrogram(audio)
   label_id = tf.argmax(tf.cast(label == get_commands(), tf.float32))
   return spectrogram, label_id
 
+# Processing function used by the training model
 def preprocess_dataset(files):
   files_ds = tf.data.Dataset.from_tensor_slices(files)
   output_ds = files_ds.map(
