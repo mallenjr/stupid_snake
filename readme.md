@@ -1,7 +1,7 @@
 # Snake, but dumb
 
 ## The Dirty Details
-1. We used the Google speech_commands dataset as a starting point for this project so I would reccomend you start there as well.
+1. We used the Google speech_commands dataset as a starting point for this project so I would recommend you start there as well.
 
     Dataset download: http://download.tensorflow.org/data/speech_commands_v0.01.tar.gz
 
@@ -19,4 +19,10 @@
 
 ## How It Works
 
-We used a library named [speechrecognition](https://pypi.org/project/SpeechRecognition/) to do most of the heavy lifting on the mic side. This let us set thresholds to get wav files from the mic in near real time. From there, we take the wav files and convert them into spectrograms and then that goes into the pre-trained tensorflow-lite model. From there, if the resulting classification passes the 40% certianty threshold, the new direction is served to the web application.
+We used a library named [speechrecognition](https://pypi.org/project/SpeechRecognition/) to do most of the heavy lifting on the mic side. This let us set thresholds to get wav files from the mic in near real time. From there, we take the wav files and convert them into spectrograms and then that goes into the pre-trained tensorflow-lite model. From there, if the resulting classification passes the 40% certainty threshold, the new direction is served to the web application.
+
+## Acknowledgements
+
+[react-simple-snake](https://github.com/MaelDrapier/react-simple-snake)
+[Medium: Urban Sound Classification using Convolutional Neural Networks](https://medium.com/gradientcrescent/urban-sound-classification-using-convolutional-neural-networks-with-keras-theory-and-486e92785df4)
+[Tensorflow: Recognizing Keywords](https://www.tensorflow.org/tutorials/audio/simple_audio#build_and_train_the_model)
