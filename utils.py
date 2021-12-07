@@ -4,11 +4,6 @@ import os
 import constants
 import pathlib
 
-try:
-  AUTOTUNE = tf.data.AUTOTUNE     
-except:
-  AUTOTUNE = tf.data.experimental.AUTOTUNE 
-
 # Get a list of commands for the provided dataset
 def get_commands():
   commands = np.array(tf.io.gfile.listdir(str(get_data_dir())))
@@ -101,8 +96,8 @@ def preprocess_dataset(files):
   files_ds = tf.data.Dataset.from_tensor_slices(files)
   output_ds = files_ds.map(
       map_func=get_waveform_and_label,
-      num_parallel_calls=AUTOTUNE)
+      num_parallel_calls=constants.AUTOTUNE)
   output_ds = output_ds.map(
       map_func=get_spectrogram_and_label_id,
-      num_parallel_calls=AUTOTUNE)
+      num_parallel_calls=constants.AUTOTUNE)
   return output_ds
