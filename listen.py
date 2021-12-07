@@ -121,10 +121,9 @@ def infer_from_speech(audio_binary):
 def run_infrence():
     # obtain audio from the microphone
     r = sr.Recognizer()
-    r.energy_threshold = constants.mic_threshold
     r.phrase_threshold = 0.125
-    r.pause_threshold = 0.125
-    r.non_speaking_duration = 0.125
+    r.pause_threshold = 0.175
+    r.non_speaking_duration = 0.175
 
     print(sr.Microphone.list_microphone_names())
 
@@ -134,6 +133,7 @@ def run_infrence():
       device_index = int(argv[1])
 
     with sr.Microphone(device_index, sample_rate=16000) as source:
+        r.adjust_for_ambient_noise(duration=4, source=source)
         while 1:
             t2_start = perf_counter()
             audio_binary = collect_speech(r, source)
