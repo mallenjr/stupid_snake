@@ -67,7 +67,7 @@ def run_http_server():
 def collect_speech(r, source):
     print("Say something!")
     audio = r.listen(source, phrase_time_limit=0.75)
-    wav_data = audio.get_wav_data()
+    wav_data = audio.get_wav_data(convert_rate=16000)
     return wav_data
 
 def prepare_data(audio_binary):
@@ -144,7 +144,7 @@ def run_infrence():
     if (len(argv) > 1):
       device_index = int(argv[1])
 
-    with sr.Microphone(device_index, sample_rate=16000) as source:
+    with sr.Microphone(device_index) as source:
         r.adjust_for_ambient_noise(duration=4, source=source)
         while 1:
             audio_binary = collect_speech(r, source)
