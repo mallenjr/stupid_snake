@@ -35,7 +35,7 @@ direction = "right"
 
 def run_http_server():
     global direction
-    app = Flask("http_server", static_folder='./dist')
+    app = Flask(__name__, static_folder='./dist')
     CORS(app)
 
     # return the last inferred direction
@@ -147,10 +147,7 @@ def run_infrence():
     with sr.Microphone(device_index, sample_rate=16000) as source:
         r.adjust_for_ambient_noise(duration=4, source=source)
         while 1:
-            t2_start = perf_counter()
             audio_binary = collect_speech(r, source)
-            t2_stop = perf_counter()
-            print(f'time to record: {t2_stop - t2_start}')
             infer_from_speech(audio_binary)
 
 # main method
@@ -159,9 +156,11 @@ if __name__ == '__main__':
     print(f'numpy version: {np.__version__}')
 
     threading.Thread(
-        target=lambda: run_http_server()
+        target=lambda: run_http_server(),
+        name="snake_http_server"
     ).start()
 
     threading.Thread(
-        target=lambda: run_infrence()
+        target=lambda: run_infrence(),
+        name="infrence_thread"
     ).start()
