@@ -19,7 +19,7 @@ def collect_sample(r, source):
 
 def main():
   if (len(argv) < 2):
-    print('usage: collect_data.py <sample_type> <sample_collection>')
+    print('usage: collect_data.py <command> <sample_collection>')
     return
 
   for index, name in enumerate(sr.Microphone.list_microphone_names()):
