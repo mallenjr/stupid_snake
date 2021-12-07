@@ -9,6 +9,7 @@ import threading
 import os
 import logging
 from sys import argv
+import matplotlib.pyplot as plt
 
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
@@ -95,6 +96,14 @@ def run_tflite_model(infrence_array):
         return direction
     else:
         return "n/a"
+
+def show_spectrogram(spectrogram):
+    fig, axes = plt.subplots(2, figsize=(12, 8))
+    utils.plot_spectrogram(spectrogram.numpy(), axes[1])
+    axes[1].set_title('Spectrogram')
+    plt.show()
+
+
 
 def infer_from_speech(audio_binary):
     print('Audio binary received. Starting inference..')
