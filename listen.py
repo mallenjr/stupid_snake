@@ -124,7 +124,7 @@ def infer_from_speech(audio_binary):
 def run_infrence():
     # obtain audio from the microphone
     r = sr.Recognizer()
-    r.phrase_threshold = 0.125
+    r.phrase_threshold = 0.175
     r.pause_threshold = 0.175
     r.non_speaking_duration = 0.175
 
