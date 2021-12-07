@@ -67,7 +67,7 @@ def run_http_server():
 def collect_speech(r, source):
     print("Say something!")
     audio = r.listen(source, phrase_time_limit=0.75)
-    wav_data = audio.get_wav_data()
+    wav_data = audio.get_wav_data(convert_rate=16000)
     return wav_data
 
 # listen to the defined microphone 
