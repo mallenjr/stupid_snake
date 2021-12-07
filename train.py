@@ -4,6 +4,7 @@ import pathlib
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
+from tensorflow import io, keras
 
 import utils
 import constants
@@ -26,7 +27,7 @@ commands = utils.get_commands()
 # Get the list of filenames to be used for
 # training/validation and return it
 def get_filenames():
-  filenames = tf.io.gfile.glob(str(data_dir) + '/*/*')
+  filenames = io.gfile.glob(str(data_dir) + '/*/*')
   filenames = tf.random.shuffle(filenames)
 
   print(len(filenames))
@@ -36,7 +37,7 @@ def get_filenames():
   num_samples = len(filenames)
   print('Number of total examples:', num_samples)
   print('Number of examples per label:',
-        len(tf.io.gfile.listdir(str(data_dir/commands[0]))))
+        len(io.gfile.listdir(str(data_dir/commands[0]))))
   print('Example file tensor:', filenames[0])
 
   return filenames
@@ -104,8 +105,8 @@ def train_model(spectrogram_ds, train_ds, val_ds, test_ds):
 
 
   clustered_model.compile(
-    optimizer=tf.keras.optimizers.Adam(),
-    loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+    optimizer=keras.optimizers.Adam(),
+    loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
     metrics=['accuracy'],
   )
 
@@ -114,7 +115,7 @@ def train_model(spectrogram_ds, train_ds, val_ds, test_ds):
     train_ds,
     validation_data=val_ds,
     epochs=EPOCHS,
-    callbacks=tf.keras.callbacks.EarlyStopping(verbose=1, patience=3),
+    callbacks=keras.callbacks.EarlyStopping(verbose=1, patience=3),
   )
 
   final_model = tfmot.clustering.keras.strip_clustering(clustered_model)
