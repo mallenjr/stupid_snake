@@ -37,6 +37,7 @@ def run_http_server():
     app = Flask("http_server", static_folder='./dist')
     CORS(app)
 
+    # return the last inferred direction
     @app.route("/")
     def main():
         global direction
@@ -52,6 +53,7 @@ def run_http_server():
         else:
             return send_from_directory(app.static_folder, 'index.html')
 
+    # serve the flask application
     app.run(
         host=constants.webserver_host_name, 
         port=constants.webserver_port, 
@@ -60,6 +62,7 @@ def run_http_server():
     )
 
 
+# listen to the defined micrpone 
 def collect_speech(r, source):
     print("Say something!")
     audio = r.listen(source, phrase_time_limit=0.75)
