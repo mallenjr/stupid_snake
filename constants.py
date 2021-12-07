@@ -1,10 +1,9 @@
-import speech_recognition
-import tensorflow as tf
+from tensorflow import data
 
 try:
-  AUTOTUNE = tf.data.AUTOTUNE     
+  AUTOTUNE = data.AUTOTUNE     
 except:
-  AUTOTUNE = tf.data.experimental.AUTOTUNE 
+  AUTOTUNE = data.experimental.AUTOTUNE 
 
 webserver_host_name = "0.0.0.0"
 webserver_port = 23336
