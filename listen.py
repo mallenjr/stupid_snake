@@ -2,7 +2,6 @@ import numpy as np
 import speech_recognition as sr
 import tensorflow as tf
 import numpy as np
-from tensorflow.keras.models import load_model
 from flask import Flask, send_from_directory
 from flask_cors import CORS                                         
 import threading
@@ -10,26 +9,30 @@ import os
 import logging
 from sys import argv
 import matplotlib.pyplot as plt
-
-log = logging.getLogger('werkzeug')
-log.setLevel(logging.ERROR)
-
 from time import perf_counter
-
 import utils
 import constants
 
 tf.config.optimizer.set_jit(True)
-
-model = load_model('model')
-tflite_model = tf.lite.Interpreter(model_path="model.tflite")
+tflite_model = tf.lite.Interpreter(model_path="model_a.tflite")
 tflite_model.allocate_tensors()
 input_details = tflite_model.get_input_details()
 output_details = tflite_model.get_output_details()
 
+tflite_b_model = tf.lite.Interpreter(model_path="model_b.tflite")
+tflite_b_model.allocate_tensors()
+input_b_details = tflite_b_model.get_input_details()
+output_b_details = tflite_b_model.get_output_details()
+
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+
 
 commands = ['eight', 'zero', 'right', 'down', 'left', 'two', '_background_noise_', 'stop', 'go', 'up']
 print(commands)
+
+commands_b = ['bed', 'right', 'down', 'left', '_background_noise_', 'no', 'wow', 'up', 'yes', 'five']
+print(commands_b)
 
 direction = "right"
 
@@ -83,15 +86,6 @@ def prepare_data(audio_binary):
 
     return spectrogram
 
-def run_base_model(infrence_array):
-    result = model.predict(infrence_array)
-    prediction = np.argmax(result, axis=1)
-    if result[0][prediction] > 0.4:
-        direction = commands[int(prediction[0])]
-        return direction
-    else:
-        return "n/a"
-
 def run_tflite_model(inference_array):
     tflite_model.set_tensor(input_details[0]['index'], inference_array)
     tflite_model.invoke()
@@ -100,6 +94,18 @@ def run_tflite_model(inference_array):
     prediction = np.argmax(result, axis=1)
     if result[0][prediction] > 0.4:
         direction = commands[int(prediction[0])]
+        return direction
+    else:
+        return "n/a"
+
+def run_tflite_b_model(inference_array):
+    tflite_b_model.set_tensor(input_b_details[0]['index'], inference_array)
+    tflite_b_model.invoke()
+
+    result = tflite_b_model.get_tensor(output_b_details[0]['index'])
+    prediction = np.argmax(result, axis=1)
+    if result[0][prediction] > 0.4:
+        direction = commands_b[int(prediction[0])]
         return direction
     else:
         return "n/a"
@@ -121,26 +127,17 @@ def infer_from_speech(audio_binary):
     inference_array.append(spectrogram.numpy())
     inference_array = np.array(inference_array)
 
-    # t1_start = perf_counter()
-    # result_a = run_base_model(inference_array)
-    # t1_stop = perf_counter()
+    result_a = run_tflite_model(inference_array)
+    result_b = run_tflite_b_model(inference_array)
+    print(f'result_a: {result_a}\nresult_b: {result_b}\n')
 
-    t2_start = perf_counter()
-    result_b = run_tflite_model(inference_array)
-    t2_stop = perf_counter()
-
-    # print(f'model a elapsed: {t1_stop - t1_start}')
-    print(f'model b elapsed: {t2_stop - t2_start}')
-    # print(f'model a result: {result_a}')
-    print(f'model b result: {result_b}\n')
-
-    direction = result_b
+    direction = result_a if result_a == result_b else 'n/a'
 
 
 def run_inference():
     # obtain audio from the microphone
     r = sr.Recognizer()
-    r.phrase_threshold = 0.175
+    r.phrase_threshold = 0.125
     r.pause_threshold = 0.175
     r.non_speaking_duration = 0.175
 

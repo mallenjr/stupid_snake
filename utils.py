@@ -1,10 +1,8 @@
 import numpy as np
 import tensorflow as tf
 import os
-
+import constants
 import pathlib
-
-DATASET_PATH = './data'
 
 try:
   AUTOTUNE = tf.data.AUTOTUNE     
@@ -21,7 +19,7 @@ def get_commands():
   return commands
 
 def get_data_dir():
-  data_dir = pathlib.Path(DATASET_PATH)
+  data_dir = pathlib.Path(constants.DATASET_PATH)
   return data_dir
 
 def get_label(file_path):

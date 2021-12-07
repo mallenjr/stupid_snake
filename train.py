@@ -15,9 +15,7 @@ seed = 42
 tf.random.set_seed(seed)
 np.random.seed(seed)
 
-DATASET_PATH = './data'
-
-data_dir = pathlib.Path(DATASET_PATH)
+data_dir = pathlib.Path(constants.DATASET_PATH)
 
 gpu_devices = tf.config.experimental.list_physical_devices('GPU')
 for device in gpu_devices:
@@ -92,7 +90,7 @@ def prepare_datasets(filenames):
 def train_model(spectrogram_ds, train_ds, val_ds, test_ds):
   print(tf.__version__)
 
-  model = m.deep_cnn(spectrogram_ds)
+  model = m.deep_cnn_slim(spectrogram_ds)
 
   model.summary()
 
@@ -129,10 +127,10 @@ def train_model(spectrogram_ds, train_ds, val_ds, test_ds):
   converter.target_spec.supported_types = [tf.float16]
   tflite_quant_model = converter.convert()
 
-  with open('model.tflite', 'wb') as f:
+  with open('model_b.tflite', 'wb') as f:
     f.write(tflite_quant_model)
 
-  clustered_model.save('./model')
+  # clustered_model.save('./model')
 
   metrics = history.history
   plt.plot(history.epoch, metrics['loss'], metrics['val_loss'])

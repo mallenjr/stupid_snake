@@ -12,3 +12,5 @@ webserver_port = 23336
 mic_threshold = 600
 
 batch_size = 64
+
+DATASET_PATH = './data_b'

@@ -24,5 +24,7 @@ We used a library named [speechrecognition](https://pypi.org/project/SpeechRecog
 ## Acknowledgements
 
 [react-simple-snake](https://github.com/MaelDrapier/react-simple-snake)
+
 [Medium: Urban Sound Classification using Convolutional Neural Networks](https://medium.com/gradientcrescent/urban-sound-classification-using-convolutional-neural-networks-with-keras-theory-and-486e92785df4)
+
 [Tensorflow: Recognizing Keywords](https://www.tensorflow.org/tutorials/audio/simple_audio#build_and_train_the_model)
