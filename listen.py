@@ -14,10 +14,10 @@ import utils
 import constants
 
 tf.config.optimizer.set_jit(True)
-tflite_model = tf.lite.Interpreter(model_path="model_a.tflite")
-tflite_model.allocate_tensors()
-input_details = tflite_model.get_input_details()
-output_details = tflite_model.get_output_details()
+tflite_a_model = tf.lite.Interpreter(model_path="model_a.tflite")
+tflite_a_model.allocate_tensors()
+input_details = tflite_a_model.get_input_details()
+output_details = tflite_a_model.get_output_details()
 
 tflite_b_model = tf.lite.Interpreter(model_path="model_b.tflite")
 tflite_b_model.allocate_tensors()
@@ -28,8 +28,8 @@ log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
 
-commands = ['eight', 'zero', 'right', 'down', 'left', 'two', '_background_noise_', 'stop', 'go', 'up']
-print(commands)
+commands_a = ['eight', 'zero', 'right', 'down', 'left', 'two', '_background_noise_', 'stop', 'go', 'up']
+print(commands_a)
 
 commands_b = ['bed', 'right', 'down', 'left', '_background_noise_', 'no', 'wow', 'up', 'yes', 'five']
 print(commands_b)
@@ -67,18 +67,12 @@ def run_http_server():
 
 
 # listen to the defined microphone 
-def collect_speech(r, source):
+def collect_speech(r, source, convert_rate=None):
     print("Say something!")
     audio = r.listen(source, phrase_time_limit=0.75)
-    wav_data = audio.get_wav_data(convert_rate=16000)
+    wav_data = audio.get_wav_data(convert_rate)
     return wav_data
 
-# listen to the defined microphone 
-def collect_speech_and_downsample(r, source):
-    print("Say something!")
-    audio = r.listen(source, phrase_time_limit=0.75)
-    wav_data = audio.get_wav_data(convert_rate=16000)
-    return wav_data
 
 def prepare_data(audio_binary):
     waveform = utils.decode_audio(audio_binary)
@@ -86,11 +80,11 @@ def prepare_data(audio_binary):
 
     return spectrogram
 
-def run_tflite_model(inference_array):
-    tflite_model.set_tensor(input_details[0]['index'], inference_array)
-    tflite_model.invoke()
+def run_model(inference_array, model, commands):
+    model.set_tensor(input_details[0]['index'], inference_array)
+    model.invoke()
 
-    result = tflite_model.get_tensor(output_details[0]['index'])
+    result = model.get_tensor(output_details[0]['index'])
     prediction = np.argmax(result, axis=1)
     if result[0][prediction] > 0.4:
         direction = commands[int(prediction[0])]
@@ -98,20 +92,8 @@ def run_tflite_model(inference_array):
     else:
         return "n/a"
 
-def run_tflite_b_model(inference_array):
-    tflite_b_model.set_tensor(input_b_details[0]['index'], inference_array)
-    tflite_b_model.invoke()
-
-    result = tflite_b_model.get_tensor(output_b_details[0]['index'])
-    prediction = np.argmax(result, axis=1)
-    if result[0][prediction] > 0.4:
-        direction = commands_b[int(prediction[0])]
-        return direction
-    else:
-        return "n/a"
-
 def show_spectrogram(spectrogram):
-    fig, axes = plt.subplots(2, figsize=(12, 8))
+    _, axes = plt.subplots(2, figsize=(12, 8))
     utils.plot_spectrogram(spectrogram.numpy(), axes[1])
     axes[1].set_title('Spectrogram')
     plt.show()
@@ -127,8 +109,8 @@ def infer_from_speech(audio_binary):
     inference_array.append(spectrogram.numpy())
     inference_array = np.array(inference_array)
 
-    result_a = run_tflite_model(inference_array)
-    result_b = run_tflite_b_model(inference_array)
+    result_a = run_model(inference_array, tflite_a_model, commands_a)
+    result_b = run_model(inference_array, tflite_b_model, commands_b)
     print(f'result_a: {result_a}\nresult_b: {result_b}\n')
 
     direction = result_a if result_a == result_b else 'n/a'
@@ -158,7 +140,7 @@ def run_inference():
         with sr.Microphone(device_index) as source:
             r.adjust_for_ambient_noise(duration=4, source=source)
             while 1:
-                audio_binary = collect_speech_and_downsample(r, source)
+                audio_binary = collect_speech(r, source, 16000)
                 infer_from_speech(audio_binary)
 
 # main method
