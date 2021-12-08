@@ -15,7 +15,7 @@ batch_size = 64
 
 DATASET_PATH = './data_b'
 
-CHUNK = 1000
+CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 16000

@@ -1,20 +1,21 @@
-import numpy as np
-import tensorflow as tf
-import numpy as np
 from flask import Flask, send_from_directory
 from flask_cors import CORS                                         
 import threading
-import os
 import logging
 from sys import argv
+import sys
 import utils
 import constants
-import pyaudio
 from collections import deque
-import io
-import wave
-import math
+from io import BytesIO
+from wave import open as wave_open
+from pyaudio import PyAudio
+from math import ceil
 from time import sleep, perf_counter
+from tensorflow import lite
+from os import path as os_path
+from numpy import argmax, int16, frombuffer, ndarray
+from numpy import array as np_array
 
 direction = "n/a"
 
@@ -26,12 +27,21 @@ HTTP SERVER CODE
 ------------------------------------------------------------------------------------------------------------------------------
 '''
 
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os_path.abspath(".")
+
+    return os_path.join(base_path, relative_path)
+
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
 def run_http_server():
     global direction
-    app = Flask(__name__, static_folder='./dist')
+    app = Flask(__name__, static_folder=resource_path('./dist'))
     CORS(app)
 
     # return the last inferred direction
@@ -45,7 +55,7 @@ def run_http_server():
     @app.route('/app/<path:path>')
     def serve(path):
         print(path)
-        if path != "" and os.path.exists(app.static_folder + '/' + path):
+        if path != "" and os_path.exists(app.static_folder + '/' + path):
             return send_from_directory(app.static_folder, path)
         else:
             return send_from_directory(app.static_folder, 'index.html')
@@ -67,7 +77,6 @@ MACHINE LEARNING CODE
 ------------------------------------------------------------------------------------------------------------------------------
 '''
 
-tf.config.optimizer.set_jit(True)
 model_a = model_b = input_details = output_details = None
 
 commands_a = ['eight', 'zero', 'right', 'down', 'left', 'two', '_background_noise_', 'stop', 'go', 'up']
@@ -75,7 +84,7 @@ commands_b = ['bed', 'right', 'down', 'left', '_background_noise_', 'no', 'wow',
 
 # Initialize a Tensorflow Lite model from a provided path
 def init_tflite_model(path):
-    tflite_model = tf.lite.Interpreter(model_path=path)
+    tflite_model = lite.Interpreter(model_path=path)
     tflite_model.allocate_tensors()
     input_details = tflite_model.get_input_details()
     output_details = tflite_model.get_output_details()
@@ -89,7 +98,7 @@ def run_model(inference_array, model, commands, results, index):
     model.invoke()
 
     result = model.get_tensor(output_details[0]['index'])
-    prediction = np.argmax(result, axis=1)
+    prediction = argmax(result, axis=1)
 
     thresh_adjust = 0.0
     if commands[int(prediction[0])] == "up":
@@ -108,7 +117,7 @@ def execute_models(audio_binary):
 
     inference_array = []
     inference_array.append(spectrogram.numpy())
-    inference_array = np.array(inference_array)
+    inference_array = np_array(inference_array)
 
     results = {
         'a': None,
@@ -142,7 +151,7 @@ def execute_models(audio_binary):
 
 # Stream audio data from the selected microphone into a 1 second buffer
 def listen(device_index, buffer, shared):
-    p = pyaudio.PyAudio()
+    p = PyAudio()
 
     info = p.get_host_api_info_by_index(0)
     numdevices = info.get('deviceCount')
@@ -164,21 +173,20 @@ def listen(device_index, buffer, shared):
 
     while True:
         current_time = perf_counter()
-        data = stream.read(constants.CHUNK)
+        data = stream.read(constants.CHUNK, exception_on_overflow = False)
         buffer.append(data)
         
-        if (len(buffer) < math.ceil(constants.RATE / constants.CHUNK)):
+        if (len(buffer) < ceil(constants.RATE / constants.CHUNK)):
             continue
 
-        data = np.frombuffer(data, dtype=np.int16)
-        max = np.ndarray.max(data)
+        data = frombuffer(data, dtype=int16)
+        max = ndarray.max(data)
         if (max > 600): # check if current chunk surpasses energy threshold
             predict_start = perf_counter()
             shared['predict'] = True
         if (current_time - predict_start > 1): # classify for 1 second
             shared['predict'] = False
 
-        
         buffer.popleft()
 
 
@@ -191,8 +199,8 @@ def predict(buffer, shared):
         if (shared['predict'] == False):
             continue
         wav_data = None
-        with io.BytesIO() as wav_file:
-            wav_writer = wave.open(wav_file, "wb")
+        with BytesIO() as wav_file:
+            wav_writer = wave_open(wav_file, "wb")
             try:
                 wav_writer.setframerate(constants.RATE)
                 wav_writer.setsampwidth(2)
@@ -209,8 +217,8 @@ def predict(buffer, shared):
 
         # Only update direction if the previous two preditions are the same
         if len(predictions) == 2 and predictions[0] == predictions[1] and direction != predictions[0]:
-            print(f'predition: {direction}')
             direction = predictions[0]
+            if predictions[0] != 'n/a': print(f'predition: {direction}')
 
 
 # Listen and infer keywords from the selected microphone
@@ -248,12 +256,9 @@ EXECUTION CODE
 
 # main method
 if __name__ == '__main__':
-    print(f'Tensorflow version: {tf.__version__}')
-    print(f'Numpy version: {np.__version__}')
-
     print('Initializing Tensorflow Lite models...')
-    model_a, input_details, output_details  = init_tflite_model('model_a.tflite')
-    model_b, _, _ = init_tflite_model('model_b.tflite')
+    model_a, input_details, output_details  = init_tflite_model(resource_path('model_a.tflite'))
+    model_b, _, _ = init_tflite_model(resource_path('model_b.tflite'))
 
     print('Starting http server thread...')
     threading.Thread(
