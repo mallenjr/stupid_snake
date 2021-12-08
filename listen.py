@@ -11,6 +11,10 @@ from sys import argv
 import matplotlib.pyplot as plt
 import utils
 import constants
+import pyaudio
+from collections import deque
+import io
+import wave
 
 direction = "n/a"
 
@@ -100,7 +104,7 @@ def run_model(inference_array, model, commands, results, index):
 
     result = model.get_tensor(output_details[0]['index'])
     prediction = np.argmax(result, axis=1)
-    if result[0][prediction] > 0.4:
+    if result[0][prediction] > 0.5:
         direction = commands[int(prediction[0])]
         results[index] = direction
     else:
@@ -115,8 +119,7 @@ def show_spectrogram(spectrogram):
 
 # Infer the intended keyword from a provided audio binary
 def infer_from_speech(audio_binary):
-    print('Audio binary received. Starting inference..')
-    global direction
+    # print('Audio binary received. Starting inference..')
     spectrogram = prepare_data(audio_binary)
 
     inference_array = []
@@ -150,18 +153,14 @@ def infer_from_speech(audio_binary):
     result_a = results['a']
     result_b = results['b']
 
-    print(f'result_a: {result_a}\nresult_b: {result_b}\n')
+    # print(f'result_a: {result_a}\nresult_b: {result_b}\n')
 
-    direction = result_a if result_a == result_b else 'n/a'
+    prediction = result_a if result_a == result_b else 'n/a'
+    return prediction
 
 # Listen and infer keywords from the selected microphone
 def run_inference():
-    # obtain audio from the microphone
-    r = sr.Recognizer()
-    r.phrase_threshold = 0.125
-    r.pause_threshold = 0.175
-    r.non_speaking_duration = 0.175
-
+    global direction
     print(sr.Microphone.list_microphone_names())
 
     device_index = 0
@@ -169,18 +168,53 @@ def run_inference():
     if (len(argv) > 1):
       device_index = int(argv[1])
 
-    try:
-        with sr.Microphone(device_index, sample_rate=16000) as source:
-            r.adjust_for_ambient_noise(duration=4, source=source)
-            while 1:
-                audio_binary = collect_speech(r, source)
-                infer_from_speech(audio_binary)
-    except:
-        with sr.Microphone(device_index) as source:
-            r.adjust_for_ambient_noise(duration=4, source=source)
-            while 1:
-                audio_binary = collect_speech(r, source, 16000)
-                infer_from_speech(audio_binary)
+    CHUNK = 1000
+    FORMAT = pyaudio.paInt16
+    CHANNELS = 1
+    RATE = 16000
+
+    p = pyaudio.PyAudio()
+    stream = p.open(
+        format = FORMAT,
+        channels = CHANNELS,
+        rate = RATE,
+        input = True,
+        output = False,
+        frames_per_buffer = CHUNK,
+        input_device_index=device_index
+    )
+
+    buffer = deque()
+    predictions = deque()
+
+    while True:
+        data = stream.read(CHUNK)
+        buffer.append(data)
+        if (len(buffer) < 16):
+            continue
+        wav_data = None
+        with io.BytesIO() as wav_file:
+            wav_writer = wave.open(wav_file, "wb")
+            try:  # note that we can't use context manager, since that was only added in Python 3.4
+                wav_writer.setframerate(RATE)
+                wav_writer.setsampwidth(2)
+                wav_writer.setnchannels(1)
+                wav_writer.writeframes(b"".join(buffer))
+                wav_data = wav_file.getvalue()
+            finally:  # make sure resources are cleaned up
+                wav_writer.close()
+
+        predition = infer_from_speech(wav_data)
+        predictions.append(predition)
+        if (len(predictions) > 2):
+            predictions.popleft()
+
+        if len(predictions) == 2 and predictions[0] == predictions[1] and direction != predictions[0]:
+            print(f'predition: {direction}')
+            direction = predictions[0]
+        
+
+        buffer.popleft()
 
 # main method
 if __name__ == '__main__':
