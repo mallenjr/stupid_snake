@@ -15,6 +15,7 @@ import pyaudio
 from collections import deque
 import io
 import wave
+from time import sleep
 
 direction = "n/a"
 
@@ -81,13 +82,6 @@ def init_tflite_model(path):
     output_details = tflite_model.get_output_details()
 
     return tflite_model, input_details, output_details 
-
-# listen to the defined microphone 
-def collect_speech(r, source, convert_rate=None):
-    print("Say something!")
-    audio = r.listen(source, phrase_time_limit=0.75)
-    wav_data = audio.get_wav_data(convert_rate)
-    return wav_data
 
 # Take in an audio binary (wav file) and return a spectrogram
 def prepare_data(audio_binary):
@@ -158,17 +152,8 @@ def infer_from_speech(audio_binary):
     prediction = result_a if result_a == result_b else 'n/a'
     return prediction
 
-# Listen and infer keywords from the selected microphone
-def run_inference():
-    global direction
-    print(sr.Microphone.list_microphone_names())
-
-    device_index = 0
-
-    if (len(argv) > 1):
-      device_index = int(argv[1])
-
-    CHUNK = 1000
+def listen(device_index, buffer):
+    CHUNK = 500
     FORMAT = pyaudio.paInt16
     CHANNELS = 1
     RATE = 16000
@@ -184,19 +169,25 @@ def run_inference():
         input_device_index=device_index
     )
 
-    buffer = deque()
-    predictions = deque()
-
     while True:
         data = stream.read(CHUNK)
         buffer.append(data)
-        if (len(buffer) < 16):
+        if (len(buffer) < 32):
             continue
+        buffer.popleft()
+
+
+def infer(buffer):
+    global direction
+    predictions = deque()
+
+    while True:
+        sleep(0.008)
         wav_data = None
         with io.BytesIO() as wav_file:
             wav_writer = wave.open(wav_file, "wb")
             try:  # note that we can't use context manager, since that was only added in Python 3.4
-                wav_writer.setframerate(RATE)
+                wav_writer.setframerate(16000)
                 wav_writer.setsampwidth(2)
                 wav_writer.setnchannels(1)
                 wav_writer.writeframes(b"".join(buffer))
@@ -212,9 +203,29 @@ def run_inference():
         if len(predictions) == 2 and predictions[0] == predictions[1] and direction != predictions[0]:
             print(f'predition: {direction}')
             direction = predictions[0]
-        
 
-        buffer.popleft()
+# Listen and infer keywords from the selected microphone
+def run_inference():
+    print(sr.Microphone.list_microphone_names())
+
+    device_index = 0
+
+    if (len(argv) > 1):
+      device_index = int(argv[1])
+
+    buffer = deque()
+
+    print('Starting http server thread...')
+    threading.Thread(
+        target=lambda: listen(device_index, buffer),
+        name="listen_thread"
+    ).start()
+
+    print('Starting http server thread...')
+    threading.Thread(
+        target=lambda: infer(buffer),
+        name="infer_thread"
+    ).start()
 
 # main method
 if __name__ == '__main__':
