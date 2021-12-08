@@ -1,5 +1,4 @@
 import numpy as np
-import speech_recognition as sr
 import tensorflow as tf
 import numpy as np
 from flask import Flask, send_from_directory
@@ -8,14 +7,14 @@ import threading
 import os
 import logging
 from sys import argv
-import matplotlib.pyplot as plt
 import utils
 import constants
 import pyaudio
 from collections import deque
 import io
 import wave
-from time import sleep
+import math
+from time import sleep, perf_counter
 
 direction = "n/a"
 
@@ -83,13 +82,6 @@ def init_tflite_model(path):
 
     return tflite_model, input_details, output_details 
 
-# Take in an audio binary (wav file) and return a spectrogram
-def prepare_data(audio_binary):
-    waveform = utils.decode_audio(audio_binary)
-    spectrogram = utils.get_spectrogram(waveform)
-
-    return spectrogram
-
 # Classify the provided audio data using the provided model and return
 # the result if the constraints are met
 def run_model(inference_array, model, commands, results, index):
@@ -101,25 +93,18 @@ def run_model(inference_array, model, commands, results, index):
 
     thresh_adjust = 0.0
     if commands[int(prediction[0])] == "up":
-        thresh_adjust = 0.25
+        thresh_adjust = 0.45
 
-    if result[0][prediction] > 0.45 + thresh_adjust:
+    if result[0][prediction] > (0.45 + thresh_adjust):
         direction = commands[int(prediction[0])]
         results[index] = direction
     else:
         results[index] = "n/a"
 
-# Take a spectrogram and show it using matplotlib
-def show_spectrogram(spectrogram):
-    _, axes = plt.subplots(2, figsize=(12, 8))
-    utils.plot_spectrogram(spectrogram.numpy(), axes[1])
-    axes[1].set_title('Spectrogram')
-    plt.show()
-
 # Infer the intended keyword from a provided audio binary
-def infer_from_speech(audio_binary):
+def execute_models(audio_binary):
     # print('Audio binary received. Starting inference..')
-    spectrogram = prepare_data(audio_binary)
+    spectrogram = utils.binary_to_spec(audio_binary)
 
     inference_array = []
     inference_array.append(spectrogram.numpy())
@@ -155,44 +140,61 @@ def infer_from_speech(audio_binary):
     prediction = result_a if result_a == result_b else 'n/a'
     return prediction
 
-def listen(device_index, buffer):
-    CHUNK = 500
-    FORMAT = pyaudio.paInt16
-    CHANNELS = 1
-    RATE = 16000
-
+# Stream audio data from the selected microphone into a 1 second buffer
+def listen(device_index, buffer, shared):
     p = pyaudio.PyAudio()
+
+    info = p.get_host_api_info_by_index(0)
+    numdevices = info.get('deviceCount')
+    for i in range(0, numdevices):
+            if (p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
+                print("Input Device id ", i, " - ", p.get_device_info_by_host_api_device_index(0, i).get('name'))
+
     stream = p.open(
-        format = FORMAT,
-        channels = CHANNELS,
-        rate = RATE,
+        format = constants.FORMAT,
+        channels = constants.CHANNELS,
+        rate = constants.RATE,
         input = True,
         output = False,
-        frames_per_buffer = CHUNK,
+        frames_per_buffer = constants.CHUNK,
         input_device_index=device_index
     )
 
+    predict_start = perf_counter()
+
     while True:
-        data = stream.read(CHUNK)
+        current_time = perf_counter()
+        data = stream.read(constants.CHUNK)
         buffer.append(data)
-        if (len(buffer) < 32):
+        
+        if (len(buffer) < math.ceil(constants.RATE / constants.CHUNK)):
             continue
+
+        data = np.frombuffer(data, dtype=np.int16)
+        max = np.ndarray.max(data)
+        if (max > 600): # check if current chunk surpasses energy threshold
+            predict_start = perf_counter()
+            shared['predict'] = True
+        if (current_time - predict_start > 1): # classify for 1 second
+            shared['predict'] = False
+
+        
         buffer.popleft()
 
 
-def predict(buffer):
+def predict(buffer, shared):
     global direction
     predictions = deque()
 
     while True:
-        if (len(buffer) < 32):
+        sleep(0.006)
+        if (shared['predict'] == False):
             continue
-        sleep(0.008)
         wav_data = None
         with io.BytesIO() as wav_file:
             wav_writer = wave.open(wav_file, "wb")
-            try:  # note that we can't use context manager, since that was only added in Python 3.4
-                wav_writer.setframerate(16000)
+            try:
+                wav_writer.setframerate(constants.RATE)
                 wav_writer.setsampwidth(2)
                 wav_writer.setnchannels(1)
                 wav_writer.writeframes(b"".join(buffer))
@@ -200,37 +202,49 @@ def predict(buffer):
             finally:  # make sure resources are cleaned up
                 wav_writer.close()
 
-        predition = infer_from_speech(wav_data)
+        predition = execute_models(wav_data)
         predictions.append(predition)
         if (len(predictions) > 2):
             predictions.popleft()
 
+        # Only update direction if the previous two preditions are the same
         if len(predictions) == 2 and predictions[0] == predictions[1] and direction != predictions[0]:
             print(f'predition: {direction}')
             direction = predictions[0]
 
+
 # Listen and infer keywords from the selected microphone
 def run_inference():
-    print(sr.Microphone.list_microphone_names())
-
     device_index = 0
 
     if (len(argv) > 1):
       device_index = int(argv[1])
 
     buffer = deque()
+    shared = {
+        'predict': False
+    }
 
     print('Starting listening thread...')
     threading.Thread(
-        target=lambda: listen(device_index, buffer),
+        target=lambda: listen(device_index, buffer, shared),
         name="listen_thread"
     ).start()
 
     print('Starting predition thread...')
     threading.Thread(
-        target=lambda: predict(buffer),
+        target=lambda: predict(buffer, shared),
         name="predict_thread"
     ).start()
+
+
+'''
+------------------------------------------------------------------------------------------------------------------------------
+
+EXECUTION CODE
+
+------------------------------------------------------------------------------------------------------------------------------
+'''
 
 # main method
 if __name__ == '__main__':

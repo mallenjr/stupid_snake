@@ -101,3 +101,10 @@ def preprocess_dataset(files):
       map_func=get_spectrogram_and_label_id,
       num_parallel_calls=constants.AUTOTUNE)
   return output_ds
+
+# Take in an audio binary (wav file) and return a spectrogram
+def binary_to_spec(audio_binary):
+    waveform = decode_audio(audio_binary)
+    spectrogram = get_spectrogram(waveform)
+
+    return spectrogram

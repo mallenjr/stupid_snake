@@ -7,3 +7,4 @@ model_*/
 model*.zip
 *.tflite
 **/.DS_Store
+.vscode
