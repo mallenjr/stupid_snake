@@ -10,13 +10,14 @@ from collections import deque
 from io import BytesIO
 from wave import open as wave_open
 from pyaudio import PyAudio
-from math import ceil
+from math import ceil, floor
 from time import sleep, perf_counter
 from tensorflow import lite
 from os import path as os_path
 from numpy import argmax, int16, frombuffer, ndarray
 from numpy import array as np_array
 import webbrowser
+from itertools import islice
 
 direction = "n/a"
 
@@ -179,7 +180,7 @@ def listen(device_index, buffer, shared):
         if (max > 600): # check if current chunk surpasses energy threshold
             predict_start = perf_counter()
             shared['predict'] = True
-        if (current_time - predict_start > 1): # classify for 1 second
+        if (current_time - predict_start > 1.5): # classify for 1.5 seconds
             shared['predict'] = False
 
         buffer.popleft()
@@ -200,7 +201,7 @@ def predict(buffer, shared):
                 wav_writer.setframerate(constants.RATE)
                 wav_writer.setsampwidth(2)
                 wav_writer.setnchannels(1)
-                wav_writer.writeframes(b"".join(buffer))
+                wav_writer.writeframes(b"".join(islice(buffer, 0, floor((constants.RATE / constants.CHUNK) / 0.6))))
                 wav_data = wav_file.getvalue()
             finally:  # make sure resources are cleaned up
                 wav_writer.close()
