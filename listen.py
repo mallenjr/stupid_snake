@@ -98,7 +98,12 @@ def run_model(inference_array, model, commands, results, index):
 
     result = model.get_tensor(output_details[0]['index'])
     prediction = np.argmax(result, axis=1)
-    if result[0][prediction] > 0.5:
+
+    thresh_adjust = 0.0
+    if commands[int(prediction[0])] == "up":
+        thresh_adjust = 0.25
+
+    if result[0][prediction] > 0.45 + thresh_adjust:
         direction = commands[int(prediction[0])]
         results[index] = direction
     else:
