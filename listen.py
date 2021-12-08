@@ -152,8 +152,6 @@ def infer_from_speech(audio_binary):
     result_a = results['a']
     result_b = results['b']
 
-    # print(f'result_a: {result_a}\nresult_b: {result_b}\n')
-
     prediction = result_a if result_a == result_b else 'n/a'
     return prediction
 
@@ -182,11 +180,13 @@ def listen(device_index, buffer):
         buffer.popleft()
 
 
-def infer(buffer):
+def predict(buffer):
     global direction
     predictions = deque()
 
     while True:
+        if (len(buffer) < 32):
+            continue
         sleep(0.008)
         wav_data = None
         with io.BytesIO() as wav_file:
@@ -220,16 +220,16 @@ def run_inference():
 
     buffer = deque()
 
-    print('Starting http server thread...')
+    print('Starting listening thread...')
     threading.Thread(
         target=lambda: listen(device_index, buffer),
         name="listen_thread"
     ).start()
 
-    print('Starting http server thread...')
+    print('Starting predition thread...')
     threading.Thread(
-        target=lambda: infer(buffer),
-        name="infer_thread"
+        target=lambda: predict(buffer),
+        name="predict_thread"
     ).start()
 
 # main method
