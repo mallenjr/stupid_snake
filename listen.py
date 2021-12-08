@@ -16,6 +16,7 @@ from tensorflow import lite
 from os import path as os_path
 from numpy import argmax, int16, frombuffer, ndarray
 from numpy import array as np_array
+import webbrowser
 
 direction = "n/a"
 
@@ -153,12 +154,6 @@ def execute_models(audio_binary):
 def listen(device_index, buffer, shared):
     p = PyAudio()
 
-    info = p.get_host_api_info_by_index(0)
-    numdevices = info.get('deviceCount')
-    for i in range(0, numdevices):
-            if (p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
-                print("Input Device id ", i, " - ", p.get_device_info_by_host_api_device_index(0, i).get('name'))
-
     stream = p.open(
         format = constants.FORMAT,
         channels = constants.CHANNELS,
@@ -223,10 +218,21 @@ def predict(buffer, shared):
 
 # Listen and infer keywords from the selected microphone
 def run_inference():
+    p = PyAudio()
+
+    info = p.get_host_api_info_by_index(0)
+    numdevices = info.get('deviceCount')
+    for i in range(0, numdevices):
+            if (p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
+                print("Input Device id ", i, " - ", p.get_device_info_by_host_api_device_index(0, i).get('name'))
+
     device_index = 0
 
     if (len(argv) > 1):
       device_index = int(argv[1])
+    else:
+      print('\nEnter the device id you would like to use:')
+      device_index = int(input())
 
     buffer = deque()
     shared = {
@@ -271,3 +277,6 @@ if __name__ == '__main__':
         target=lambda: run_inference(),
         name="inference_thread"
     ).start()
+
+    sleep(1)
+    webbrowser.open_new("http://localhost:23336/app")
