@@ -5,7 +5,6 @@ model/
 __pycache__/
 model_*/
 model*.zip
-*.tflite
 **/.DS_Store
 .vscode
 build/

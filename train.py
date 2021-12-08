@@ -127,9 +127,7 @@ def train_model(spectrogram_ds, train_ds, val_ds, test_ds):
 
   with open('model_b.tflite', 'wb') as f:
     f.write(tflite_quant_model)
-
-  # clustered_model.save('./model')
-
+    
   metrics = history.history
   plt.plot(history.epoch, metrics['loss'], metrics['val_loss'])
   plt.legend(['loss', 'val_loss'])
