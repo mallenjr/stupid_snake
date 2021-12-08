@@ -1,5 +1,9 @@
 # Snake, but dumb
 
+## What?
+
+This is the game of snake, but you control it with your voice. We use a 2 tensorflow lite models that contain a derivative of VGG and that have ~500k trainable params each in an ensemble arrangement for the real-time inference. We also use the bagging method to provide each model with a completely different dataset save for the 4 activation phrases we really wanted to focus on. With both models running simultaneously in different threads, we have generally seen an inference time of ~2ms for a 1 second audio binary. We observed ~100ms as being the total time it takes from starting to speak to having a classification of that audio.
+
 ## The Dirty Details
 1. We used the Google speech_commands dataset as a starting point for this project so I would recommend you start there as well.
 

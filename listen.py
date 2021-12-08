@@ -191,9 +191,10 @@ def predict(buffer, shared):
     predictions = deque()
 
     while True:
-        sleep(0.006)
+        sleep(0.003)
         if (shared['predict'] == False):
             continue
+        sleep(0.003)
         wav_data = None
         with BytesIO() as wav_file:
             wav_writer = wave_open(wav_file, "wb")
