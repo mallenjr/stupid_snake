@@ -21,9 +21,14 @@ This is the game of snake, but you control it with your voice. We use a 2 tensor
 
 6. Listen.py will also spawn a webserver that will host the snake game. This can be found at http://localhost:23336/app.
 
+## Roadmap
+
+- [ ] Turn the listening program into a class
+- [ ] Attempt a rewrite in Rust to produce a smaller exec
+
 ## How It Works
 
-We used a library named [speechrecognition](https://pypi.org/project/SpeechRecognition/) to do most of the heavy lifting on the mic side. This let us set thresholds to get wav files from the mic in near real time. From there, we take the wav files and convert them into spectrograms and then that goes into the pre-trained tensorflow-lite model. From there, if the resulting classification passes the 40% certainty threshold, the new direction is served to the web application.
+We record audio directly from the selected microphone at 16 kHz and buffer ~1s of audio for inference. When the incoming audio is above a reasonable activity threshold you start the inference engine and run it for 1.5 seconds after the audio level decreases again. While the inference engine is running, we take the entire buffer from the listener and encode it to wave format every 6ms. From there, we take the wav file and convert the audio into a spectrogram and then that goes into the pre-trained Tensorflow lLite models. From there, if the resulting classification passes the 40% certainty threshold, the new direction is served to the web application.
 
 ## Acknowledgements
 
