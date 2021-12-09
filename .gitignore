@@ -10,3 +10,4 @@ model*.zip
 .vscode
 build/
 dist/listen*
+*.spec
