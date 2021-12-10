@@ -1,0 +1,16 @@
+{
+  "name": "snake_wasm",
+  "collaborators": [
+    "Michael Allen <mallenjr42@gmail.com>"
+  ],
+  "version": "0.1.0",
+  "files": [
+    "infer_bg.wasm",
+    "infer.js",
+    "infer_bg.js",
+    "infer.d.ts"
+  ],
+  "module": "infer.js",
+  "types": "infer.d.ts",
+  "sideEffects": false
+}
