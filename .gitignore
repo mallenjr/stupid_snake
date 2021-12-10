@@ -11,3 +11,7 @@ model*.zip
 build/
 dist/listen*
 *.spec
+
+# Added by cargo
+
+/target
