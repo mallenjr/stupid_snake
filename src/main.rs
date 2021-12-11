@@ -26,28 +26,17 @@ fn get_host() -> cpal::Host {
     host
 }
 
-fn get_input_device(host: cpal::Host) -> cpal::Device {
-    let input_devices = host.input_devices().expect("Failed to query input devices");
-
-    for (pos, device) in input_devices.enumerate() {
-        let configs = device.supported_input_configs();
-
-        if let Err(_e) = configs { // We could not query inputs from this device
-            continue
-        }
-
-        println!("Device {}: {}", pos, device.name().expect("Could not display device name"))
-    }
-
-    host.default_input_device().unwrap()
-}
-
 fn main() {
 
     let host = get_host();
 
     println!("\nSelected Host Device: {}\n", host.id().name());
 
-    let _input_device = get_input_device(host);
+    let input_device = host.default_input_device().unwrap();
+
+    let config = input_device
+        .default_input_config()
+        .expect("Failed to get default input config");
+    println!("Default input config: {:?}", config);
 
 }
