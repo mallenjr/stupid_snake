@@ -36,10 +36,6 @@ fn get_input_device(host: cpal::Host) -> cpal::Device {
             continue
         }
 
-        for (_, config) in configs.unwrap().enumerate() {
-            println!("{:?}", config.min_sample_rate());
-        }
-
         println!("Device {}: {}", pos, device.name().expect("Could not display device name"))
     }
 
@@ -52,6 +48,6 @@ fn main() {
 
     println!("\nSelected Host Device: {}\n", host.id().name());
 
-    let input_device = get_input_device(host);
+    let _input_device = get_input_device(host);
 
 }
