@@ -9,3 +9,5 @@ edition = "2018"
 [dependencies]
 tflite = "0.9.6"
 cpal = "0.13.4"
+hound = "3.4"
+anyhow = "1.0.12"
